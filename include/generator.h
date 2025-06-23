@@ -11,6 +11,7 @@
 #include <fstream>
 #include <utility>
 #include <random>
+#include <cmath>
 using namespace std;
 
 extern size_t n = 100;
@@ -23,11 +24,10 @@ parlay::sequence<int> generate_uniform(size_t range) {
 
   // preventing work-stealing so the input generated is deterministic
   parlay::parallel_for(0, num_workers, [&](size_t k) {
-    static thread_local std::mt19937 gen(seed + k);
+    std::mt19937 gen(seed + k);
     std::uniform_int_distribution<> dist(0, range);
 
-    for (int i = n / num_workers * k; i < n / num_workers * (k+1); i++){ 
-      // will this account for non-perfect partitions?
+    for (int i = n * k / num_workers; i < n * (k+ 1) / num_workers; i++){ 
       result[i] = dist(gen);
     }
   });
@@ -39,37 +39,82 @@ parlay::sequence<int> generate_exponential(double ld) {
   int num_workers = parlay::num_workers();
 
   parlay::parallel_for(0, num_workers, [&](size_t k) {
-    static thread_local std::mt19937 gen(seed + k);
+    std::mt19937 gen(seed + k);
     std::exponential_distribution<> dist(ld);
 
-    for (int i = n / num_workers * i; i < n / num_workers * (i+1); i++){ 
-      // will this account for non-perfect partitions?
+    for (int i = n * k / num_workers; i < n * (k+ 1) / num_workers; i++){ 
       result[i] = int(dist(gen));
     }
   });
   return result;
 }
 
-template<class T>
-parlay::sequence<T> zipfian_generator(double s) {
-  printf("zipfian distribution with s: %f\n", s);
-  size_t cutoff = n;
-  auto harmonic = parlay::delayed_seq<double>(cutoff, [&](size_t i) { return 1.0 / pow(i + 1, s); });
-  double sum = parlay::reduce(make_slice(harmonic));
-  double v = n / sum;
-  parlay::sequence<size_t> nums(cutoff + 1, 0);
-  parlay::parallel_for(0, cutoff, [&](size_t i) { nums[i] = max(1.0, v / pow(i + 1, s)); });
-  size_t tot = scan_inplace(make_slice(nums));
-  assert(tot >= n);
-  parlay::sequence<T> seq(n);
-  parlay::parallel_for(0, cutoff, [&](size_t i) {
-    parlay::parallel_for(nums[i], min(n, nums[i + 1]), [&](size_t j) {
-      // seq[j] = _hash(static_cast<T>(i));
-      seq[j] = i;
-    });
+// currently not deterministic
+parlay::sequence<int> generate_zipf(double alpha) {
+  using std::pow;
+
+  // compute Zipf probabilities
+  parlay::sequence<double> probs(n);
+  parlay::parallel_for(0, n, [&](size_t i) {
+    probs[i] = 1.0 / pow((double)(i + 1), alpha);
   });
-  return random_shuffle(seq);
+
+  // normalize
+  double total = parlay::reduce(probs);
+  parlay::parallel_for(0, n, [&](size_t i) {
+    probs[i] /= total;
+  });
+
+  // create cdf
+  parlay::sequence<double> cdf(n);
+  cdf[0] = probs[0];
+  parlay::parallel_for(1, n, [&](size_t i) {
+    cdf[i] = cdf[i - 1] + probs[i];
+  });
+  cdf[n - 1] = 1.0;
+
+  // sample
+  parlay::sequence<int> result(n);
+  int num_workers = parlay::num_workers();
+
+  parlay::parallel_for(0, num_workers, [&](size_t k) {
+    std::mt19937 gen(seed + k);
+    std::uniform_real_distribution<> dist(0.0, 1.0);
+
+    size_t start = n * k / num_workers;
+    size_t end = n * (k + 1) / num_workers;
+
+    for (size_t j = start; j < end; ++j) {
+      double z = dist(gen);
+
+      // Binary search for smallest index i such that cdf[i] >= z
+      size_t left = 0, right = n - 1, mid;
+      while (left < right) {
+        mid = (left + right) / 2;
+        if (cdf[mid] >= z)
+          right = mid;
+        else
+          left = mid + 1;
+      }
+      result[j] = (int)(left + 1);  // Zipf values start at 1
+    }
+  });
+
+  return result;
 }
+
+parlay::sequence<int> allEqual(int key){
+  return parlay::sequence<int>(n, key);
+}
+
+// later uhh consider the things that go past 2 bil bc int won't work
+auto sorted(){
+  return parlay::tabulate(n, [&](size_t i){
+    return i;
+  });
+}
+
+
 
 template<class T>
 void write_to_file(const parlay::sequence<pair<T, T>> &seq) {
