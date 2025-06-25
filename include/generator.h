@@ -108,12 +108,35 @@ parlay::sequence<int> allEqual(int key){
 }
 
 // later uhh consider the things that go past 2 bil bc int won't work
-auto sorted(){
+auto sorted(bool asc){
   return parlay::tabulate(n, [&](size_t i){
-    return i;
+    return asc? i : n - i;
   });
 }
 
+parlay::sequence<int> RootDup(){
+  return parlay::tabulate(n, [&](size_t i){
+    return i % sqrt(n);
+  });
+}
+
+parlay::sequence<int> TwoDup(){
+  return parlay::tabulate(n, [&](size_t i){
+    return (i^2 + n/2) % n;
+  });
+}
+
+parlay::sequence<int> EightDup(){
+  return parlay::tabulate(n, [&](size_t i){
+    return (i^8 + n/2) % n
+  });
+}
+
+parlay::sequence<int> mergeDup(){
+  return parlay::tabulate(n, [&](size_t i){
+    return i % (n/2);
+  });
+}
 
 
 template<class T>

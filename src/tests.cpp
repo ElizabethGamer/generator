@@ -75,8 +75,31 @@ void run_rep_dist() {
   run_all(seq);
 
   // sorted
-  auto seq = sorted();
+  auto seq = sorted(true);
   printf("sorted distribution\n");
+  run_all(seq);
+
+  // reverse sorted
+  auto seq = sorted(false);
+  printf("reverse sorted distribution\n");
+  run_all(seq);
+
+  // duplicate distributions
+  auto seq = RootDup();
+  printf("rootdup distribution\n");
+  run_all(seq);
+  
+  auto seq = TwoDup();
+  printf("twodup sorted distribution\n");
+  run_all(seq);
+
+  auto seq = EightDup();
+  printf("eightdup sorted distribution\n");
+  run_all(seq);
+
+  // two equal ascending arrays
+  auto seq = mergeDup();
+  printf("eightdup sorted distribution\n");
   run_all(seq);
 }
 
