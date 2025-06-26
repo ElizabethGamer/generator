@@ -14,7 +14,7 @@
 #include <cmath>
 using namespace std;
 
-extern size_t n = 100;
+extern size_t n = 16384;
 size_t seed = 42;
 constexpr int base = 1e9 + 7;
 
@@ -114,29 +114,30 @@ auto sorted(bool asc){
   });
 }
 
-parlay::sequence<int> RootDup(){
-  return parlay::tabulate(n, [&](size_t i){
-    return i % sqrt(n);
-  });
-}
+// auto RootDup(){
+//   int block = static_cast<int>(sqrt(n));
+//   return parlay::tabulate(n, [&](size_t i){
+//     return i % block;
+//   });
+// }
 
-parlay::sequence<int> TwoDup(){
-  return parlay::tabulate(n, [&](size_t i){
-    return (i^2 + n/2) % n;
-  });
-}
+// auto TwoDup(){
+//   return parlay::tabulate(n, [&](size_t i){
+//     return (i^2 + n/2) % n;
+//   });
+// }
 
-parlay::sequence<int> EightDup(){
-  return parlay::tabulate(n, [&](size_t i){
-    return (i^8 + n/2) % n
-  });
-}
+// auto EightDup(){
+//   return parlay::tabulate(n, [&](size_t i){
+//     return (i^8 + n/2) % n;
+//   });
+// }
 
-parlay::sequence<int> mergeDup(){
-  return parlay::tabulate(n, [&](size_t i){
-    return i % (n/2);
-  });
-}
+// auto mergeDup(){
+//   return parlay::tabulate(n, [&](size_t i){
+//     return i % (n/2);
+//   });
+// }
 
 
 template<class T>
