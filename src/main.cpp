@@ -22,7 +22,7 @@ int main(){
         std::uniform_int_distribution<long> dis(0, n-1);
         int num_buckets = sqrt(n);
 
-        int over_ratio = 8;
+        int over_ratio = 16;
         auto oversample = parlay::tabulate(num_buckets * over_ratio, [&] (long i) {
             auto r = gen[i];
             return input[dis(r)];
@@ -52,6 +52,7 @@ int main(){
             }
             return sum;
         });
+
         parlay::scan_inplace(counts);
 
         auto unoverlapped = parlay::tabulate(num_buckets, [&](size_t i){
@@ -66,9 +67,27 @@ int main(){
 
             int block = static_cast<int>(sqrt(n));
 
-            return (std::max<int>({0, std::min<int>(i * block - start, counts[i+1] - counts[i])}) + std::max<int>({0, std::min<int>(end - (i + 1) * block + 1, counts[i+1] - counts[i])}));
+            if (i != num_buckets - 1){
+                return (std::max<int>({0, std::min<int>(i * block - start, counts[i+1] - counts[i])}) + std::max<int>({0, std::min<int>(end - (i + 1) * block + 1, counts[i+1] - counts[i])}));    
+            } else {
+                return (std::max<int>({0, i * block - start}));
+            }
+
+            
         });
 
+        // for (auto v : input){
+        //     cout << v << ' ';
+        // }
+        // cout << endl;
+        // for (auto v : pivots){
+        //     cout << v << ' ';
+        // }
+        // cout << endl;
+        // for (auto v : counts){
+        //     cout << v << ' ';
+        // }
+        // cout << endl;
         // for (auto v : unoverlapped){
         //     cout << v << ' ';
         // }
