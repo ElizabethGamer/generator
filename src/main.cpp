@@ -9,13 +9,16 @@
 #include <iostream>
 #include <fstream>
 
-int main(){
+void test_distribution(){
     int num_workers = parlay::num_workers();
     vector<long> results;
 
-    for (int i = 0; i < n; i++){
-        seed = i * num_workers;
-        auto input = generate_uniform(n);
+    for (int i = 0; i < 1; i++){
+        seed = i;
+        // auto input = generate_uniform(n);
+        auto input = parlay::tabulate(n, [&](size_t i){
+            return i;
+        });
 
         // generate sample
         parlay::random_generator gen;
@@ -32,6 +35,10 @@ int main(){
         // sub sample to pick final pivots (num_buckets - 1 of them)
         auto pivots = parlay::tabulate(num_buckets-1, [&] (long i) {
             return oversample[(i+1)*over_ratio];
+        });
+
+        pivots = parlay::tabulate(num_buckets - 1, [&](size_t i){
+            return input[(i + 1) * num_buckets];
         });
 
         // get bucket counts
@@ -52,6 +59,9 @@ int main(){
             }
             return sum;
         });
+
+        cout << ss.find(8, std::less()) << endl;
+        cout << ss.find(16, std::less()) << endl;
 
         parlay::scan_inplace(counts);
 
@@ -101,6 +111,9 @@ int main(){
         cout << t << '\n';
         ofs << t << '\n';
     }
+}
 
+int main(){
+    test_distribution();
     return 0;
 }

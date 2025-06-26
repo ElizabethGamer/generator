@@ -14,38 +14,31 @@
 #include <cmath>
 using namespace std;
 
-extern size_t n = 16384;
+extern size_t n = 64;
 size_t seed = 42;
 constexpr int base = 1e9 + 7;
 
 parlay::sequence<int> generate_uniform(size_t range) {
-  parlay::sequence<int> result(n);
-  int num_workers = parlay::num_workers();
+  parlay::random_generator gen(seed);
+  std::uniform_int_distribution<int> dis(0, range);
 
-  // preventing work-stealing so the input generated is deterministic
-  parlay::parallel_for(0, num_workers, [&](size_t k) {
-    std::mt19937 gen(seed + k);
-    std::uniform_int_distribution<> dist(0, range);
-
-    for (int i = n * k / num_workers; i < n * (k+ 1) / num_workers; i++){ 
-      result[i] = dist(gen);
-    }
+  auto result = parlay::tabulate(n, [&](size_t i) {
+    auto r = gen[i];
+    return dis(r);
   });
+
   return result;
 }
 
 parlay::sequence<int> generate_exponential(double ld) {
-  parlay::sequence<int> result(n);
-  int num_workers = parlay::num_workers();
+  parlay::random_generator gen(seed);
+  std::exponential_distribution<> dis(ld);
 
-  parlay::parallel_for(0, num_workers, [&](size_t k) {
-    std::mt19937 gen(seed + k);
-    std::exponential_distribution<> dist(ld);
-
-    for (int i = n * k / num_workers; i < n * (k+ 1) / num_workers; i++){ 
-      result[i] = int(dist(gen));
-    }
+  auto result = parlay::tabulate(n, [&](size_t i) {
+    auto r = gen[i];
+    return int(dis(r));
   });
+
   return result;
 }
 
