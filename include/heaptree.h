@@ -38,11 +38,21 @@ struct heap_tree {
   // finds a key in the "heap indexed" tree
   template <typename Less>
   inline int find(const T& key, const Less& less) {
-    long j = 0;
-    for (int k = 0; k < levels; k++) {
-      j = 1 + 2 * j + less(tree[j],key);
+    int bucket = 0;
+    int curr = (size + 1) / 2;
+    int j = 0;
+
+    while (curr > 0) {
+      if (key >= tree[j]){
+        bucket += curr;
+        j = j * 2 + 2;
+      } else {
+        j = j * 2 + 1;
+      }
+      
+      curr /= 2;
     }
-    j = 1 + 2 * j + !less(key,tree[j]);
-    return j - size;
+
+    return bucket;
   }
 };

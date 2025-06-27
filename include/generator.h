@@ -14,7 +14,7 @@
 #include <cmath>
 using namespace std;
 
-extern size_t n = 64;
+extern size_t n = 16384;
 size_t seed = 42;
 constexpr int base = 1e9 + 7;
 

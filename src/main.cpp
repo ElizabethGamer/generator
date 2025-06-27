@@ -13,12 +13,9 @@ void test_distribution(){
     int num_workers = parlay::num_workers();
     vector<long> results;
 
-    for (int i = 0; i < 1; i++){
+    for (int i = 0; i < n; i++){
         seed = i;
-        // auto input = generate_uniform(n);
-        auto input = parlay::tabulate(n, [&](size_t i){
-            return i;
-        });
+        auto input = generate_uniform(n);
 
         // generate sample
         parlay::random_generator gen;
@@ -35,10 +32,6 @@ void test_distribution(){
         // sub sample to pick final pivots (num_buckets - 1 of them)
         auto pivots = parlay::tabulate(num_buckets-1, [&] (long i) {
             return oversample[(i+1)*over_ratio];
-        });
-
-        pivots = parlay::tabulate(num_buckets - 1, [&](size_t i){
-            return input[(i + 1) * num_buckets];
         });
 
         // get bucket counts
@@ -59,9 +52,6 @@ void test_distribution(){
             }
             return sum;
         });
-
-        cout << ss.find(8, std::less()) << endl;
-        cout << ss.find(16, std::less()) << endl;
 
         parlay::scan_inplace(counts);
 
@@ -101,6 +91,8 @@ void test_distribution(){
         // for (auto v : unoverlapped){
         //     cout << v << ' ';
         // }
+        // cout << endl; 
+        // cout << ss.find(8, std::less()) << endl;
 
         results.push_back(parlay::reduce(unoverlapped));
     }
