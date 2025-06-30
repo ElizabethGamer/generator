@@ -15,7 +15,7 @@
 #include <cmath>
 using namespace std;
 
-extern size_t n = 16384;
+extern size_t n = 1'024'000'000;
 size_t seed = 42;
 constexpr int base = 1e9 + 7;
 
@@ -97,6 +97,24 @@ parlay::sequence<int> generate_zipf(double alpha) {
   return result;
 }
 
+auto generate_bitexp(double rate){
+  parlay::sequence<int> result(n);
+  size_t num_bits = 4 * 8; // size_of(int) but c++ got mad at me for doing that :(
+  parlay::random_generator gen(seed);
+  std::uniform_real_distribution<double> dis(0, 1);
+
+  parlay::parallel_for(0, n, [&](size_t i){
+    for (int j = 0; j < num_bits; j++){
+      auto r = gen[i * num_bits + j];
+      if (dis(r) > rate){
+        result[i] |= static_cast<int>(1) << j;
+      }
+    }
+  });
+
+  return result;
+}
+
 parlay::sequence<int> allEqual(int key){
   return parlay::sequence<int>(n, key);
 }
@@ -108,30 +126,30 @@ auto sorted(bool asc){
   });
 }
 
-// auto RootDup(){
-//   int block = static_cast<int>(sqrt(n));
-//   return parlay::tabulate(n, [&](size_t i){
-//     return i % block;
-//   });
-// }
+auto RootDup(){
+  int block = static_cast<int>(sqrt(n));
+  return parlay::tabulate(n, [&](size_t i){
+    return i % block;
+  });
+}
 
-// auto TwoDup(){
-//   return parlay::tabulate(n, [&](size_t i){
-//     return (i^2 + n/2) % n;
-//   });
-// }
+auto TwoDup(){
+  return parlay::tabulate(n, [&](size_t i){
+    return (i^2 + n/2) % n;
+  });
+}
 
-// auto EightDup(){
-//   return parlay::tabulate(n, [&](size_t i){
-//     return (i^8 + n/2) % n;
-//   });
-// }
+auto EightDup(){
+  return parlay::tabulate(n, [&](size_t i){
+    return (i^8 + n/2) % n;
+  });
+}
 
-// auto mergeDup(){
-//   return parlay::tabulate(n, [&](size_t i){
-//     return i % (n/2);
-//   });
-// }
+auto mergeDup(){
+  return parlay::tabulate(n, [&](size_t i){
+    return i % (n/2);
+  });
+}
 
 
 template<class T>

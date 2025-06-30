@@ -15,16 +15,16 @@ void test_distribution(){
     int num_workers = parlay::num_workers();
     vector<long> results;
 
-    for (int i = 0; i < n; i++){
+    for (int i = 0; i < 100; i++){
         seed = i;
         auto input = generate_uniform(n);
 
         // generate sample
         parlay::random_generator gen;
         std::uniform_int_distribution<long> dis(0, n-1);
-        int num_buckets = sqrt(n);
+        int num_buckets = 128;
 
-        int over_ratio = 16;
+        int over_ratio = 8192;
         auto oversample = parlay::tabulate(num_buckets * over_ratio, [&] (long i) {
             auto r = gen[i];
             return input[dis(r)];
@@ -67,7 +67,7 @@ void test_distribution(){
                 end = n - 1;
             }
 
-            int block = static_cast<int>(sqrt(n));
+            int block = n / num_buckets;
 
             if (i != num_buckets - 1){
                 return (std::max<int>({0, std::min<int>(i * block - start, counts[i+1] - counts[i])}) + std::max<int>({0, std::min<int>(end - (i + 1) * block + 1, counts[i+1] - counts[i])}));    

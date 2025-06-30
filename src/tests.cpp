@@ -69,6 +69,12 @@ void run_rep_dist() {
     run_all(seq);
   }
 
+  // bitexp distribution
+  double t = 5.0;
+  auto seq = generate_bitexp(1 / t);
+  printf("bit exponential distribution with t: %f\n", t);
+  run_all(seq);
+
   // all equal
   auto seq = allEqual(1);
   printf("all equal distribution\n");
