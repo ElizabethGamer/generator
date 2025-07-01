@@ -1,3 +1,5 @@
+#pragma once
+
 #include "generator.h"
 #include "parlay/sequence.h"
 
