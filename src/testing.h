@@ -2,6 +2,7 @@
 
 #include "generator.h"
 #include "parlay/sequence.h"
+#include "../../parlaylib/examples/samplesort.h"
 
 #include <iostream>
 #include <fstream>
@@ -19,6 +20,7 @@ double test(const sequence<T> &in) {
     auto seq = in;
     internal::timer t;
     // function to test
+    sample_sort(seq);
     t.stop();
 
     if (i == 0) {
@@ -72,52 +74,53 @@ void run_rep_dist() {
   }
 
   // bitexp distribution
-  double t = 5.0;
-  auto seq = generate_bitexp(1 / t);
-  printf("bit exponential distribution with t: %f\n", t);
-  run_all(seq);
+  vector<double> t{5.0};
+  for (auto v : t){
+    auto seq = generate_bitexp(1 / v);
+    printf("bit exponential distribution with t: %f\n", v);
+    run_all(seq);
+  }
 
   // all equal
-  auto seq = allEqual(1);
+  auto equal_seq = allEqual(1);
   printf("all equal distribution\n");
-  run_all(seq);
+  run_all(equal_seq);
 
   // sorted
-  auto seq = sorted(true);
+  auto sort_seq = sorted(true);
   printf("sorted distribution\n");
-  run_all(seq);
+  run_all(sort_seq);
 
   // reverse sorted
-  auto seq = sorted(false);
+  auto reverse_seq = sorted(false);
   printf("reverse sorted distribution\n");
-  run_all(seq);
+  run_all(reverse_seq);
 
   // duplicate distributions
-  auto seq = RootDup();
+  auto rd_seq = RootDup();
   printf("rootdup distribution\n");
-  run_all(seq);
+  run_all(rd_seq);
   
-  auto seq = TwoDup();
+  auto t_seq = TwoDup();
   printf("twodup sorted distribution\n");
-  run_all(seq);
+  run_all(t_seq);
 
-  auto seq = EightDup();
+  auto e_seq = EightDup();
   printf("eightdup sorted distribution\n");
-  run_all(seq);
+  run_all(e_seq);
 
   // two equal ascending arrays
-  auto seq = mergeDup();
+  auto merge_seq = mergeDup();
   printf("eightdup sorted distribution\n");
-  run_all(seq);
+  run_all(merge_seq);
 }
 
 
-template<class T>
 void run_all_sizes() {
   vector<size_t> sizes{1'000'000, 10'000'000, 100'000'000, 1'000'000'000, 2'000'000'000, 4'000'000'000};
   for (auto input_size : sizes) {
     n = input_size;
     printf("size: %ld\n", n);
-    run_rep_dist<T>();
+    run_rep_dist();
   }
 }
